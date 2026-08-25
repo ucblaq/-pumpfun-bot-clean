@@ -46,6 +46,93 @@ function getRandomWallets(count) {
   return wallets.slice(0, count);
 }
 
+async function bundleTokens(ctx) {
+  await ctx.reply('Enter the amount of SOL you want to bundle (e.g. 0.1):');
+  return ctx.wizard.enter('bundle-wizard');
+}
+
+const bundleWizard = new Scenes.WizardScene(
+  'bundle-wizard',
+  async (ctx) => {
+    if (!ctx.message?.text) return;
+    const amount = parseFloat(ctx.message.text.trim());
+    if (!Number.isFinite(amount) || amount <= 0) {
+      return ctx.reply('Please enter a valid amount (e.g. 0.1).');
+    }
+    ctx.wizard.state.data.amount = amount;
+    await ctx.reply(`Confirm: Bundle ${amount} SOL to 9 random wallets.`);
+    return ctx.wizard.next();
+  },
+  async (ctx) => {
+    const { amount } = ctx.wizard.state.data;
+    const wallets = getRandomWallets(9);
+    for (const wallet of wallets) {
+      const transaction = new Transaction().add(
+        SystemProgram.transfer({
+          fromPubkey: creatorKeypair.publicKey,
+          toPubkey: wallet,
+          lamports: amount * 1e9,
+        })
+      );
+
+      try {
+        const signature = await sendAndConfirmTransaction(connection, transaction, [creatorKeypair]);
+        console.log(`✅ Bundled ${amount} SOL to ${wallet} (Transaction: ${signature})`);
+      } catch (err) {
+        console.error(`❌ Failed to bundle to ${wallet}: ${err.message}`);
+      }
+    }
+    await ctx.reply(`✅ Bundled ${amount} SOL to 9 random wallets.`);
+    return ctx.scene.leave();
+  }
+);
+
+async function dumpTokens(ctx) {
+  await ctx.reply('Enter the amount of SOL you want to dump (e.g. 0.1):');
+  return ctx.wizard.enter('dump-wizard');
+}
+
+const dumpWizard = new Scenes.WizardScene(
+  'dump-wizard',
+  async (ctx) => {
+    if (!ctx.message?.text) return;
+    const amount = parseFloat(ctx.message.text.trim());
+    if (!Number.isFinite(amount) || amount <= 0) {
+      return ctx.reply('Please enter a valid amount (e.g. 0.1).');
+    }
+    ctx.wizard.state.data.amount = amount;
+    await ctx.reply(`Confirm: Dump ${amount} SOL to 10 wallets in 10 seconds.`);
+    return ctx.wizard.next();
+  },
+  async (ctx) => {
+    const { amount } = ctx.wizard.state.data;
+    const wallets = getRandomWallets(10);
+    const startTime = Date.now();
+
+    while (Date.now() - startTime < 10000) {
+      for (const wallet of wallets) {
+        const transaction = new Transaction().add(
+          SystemProgram.transfer({
+            fromPubkey: creatorKeypair.publicKey,
+            toPubkey: wallet,
+            lamña: amount * 1e9,
+          })
+        );
+
+        try {
+          const signature = await sendAndConfirmTransaction(connection, transaction, [creatorKeypair]);
+          console.log(`✅ Dumped ${amount} SOL to ${wallet} (Transaction: ${signature})`);
+        } catch (err) {
+          console.error(`❌ Failed to dump to ${wallet}: ${err.message}`);
+        }
+      }
+      await new Promise(resolve => setTimeout(resolve, 1000)); // 1 second interval
+    }
+    await ctx.reply(`✅ Dumped ${amount} SOL to 10 wallets within 10 seconds.`);
+    return ctx.scene.leave();
+  }
+);
+
 // --- Launch Wizard --- (same as before)
 const launchWizard = new Scenes.WizardScene(
   'launch-wizard',
@@ -149,7 +236,7 @@ launchWizard.action('confirm_launch', async (ctx) => {
   return ctx.scene.leave();
 });
 
-const stage = new Scenes.Stage([launchWizard]);
+const stage = new Scenes.Stage([launchWizard, bundleWizard, dumpWizard]);
 const bot = new Telegraf(TELEGRAM_BOT_TOKEN);
 
 bot.use(session());
@@ -187,11 +274,3 @@ http.createServer((req, res) => res.end('Bot is running')).listen(port);
 
 process.once('SIGINT', () => bot.stop('SIGINT'));
 process.once('SIGTERM', () => bot.stop('SIGTERM'));
-bot.start((ctx) => ctx.reply('Send /launch to create a new pump.fun token.'));
-bot.command('launch', (ctx) => ctx.scene.enter('launch-wizard'));
-bot.command('cancel', async (ctx) => {
-  if (ctx.scene?.current) {
-    await ctx.scene.leave();
-    await ctx.reply('Cancelled.');
-  }
-});
