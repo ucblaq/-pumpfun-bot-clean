@@ -1,4 +1,4 @@
-
+{
   "name": "pumpfun-launch-bot",
   "version": "1.0.0",
   "description": "Telegram bot that launches a token on pump.fun via the PumpPortal API",
