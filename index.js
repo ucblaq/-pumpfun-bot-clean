@@ -115,7 +115,7 @@ const dumpWizard = new Scenes.WizardScene(
           SystemProgram.transfer({
             fromPubkey: creatorKeypair.publicKey,
             toPubkey: wallet,
-            lamña: amount * 1e9,
+            lamports: amount * 1e9,
           })
         );
 
