@@ -59,7 +59,7 @@ const bundleWizard = new Scenes.WizardScene(
     if (!Number.isFinite(amount) || amount <= 0) {
       return ctx.reply('Please enter a valid amount (e.g. 0.1).');
     }
-    ctx.wizard.state.data.amount = amount;
+    ctx.wizard.state.data = { amount }; // Initialize state.data
     await ctx.reply(`Confirm: Bundle ${amount} SOL to 9 random wallets.`);
     return ctx.wizard.next();
   },
@@ -100,7 +100,7 @@ const dumpWizard = new Scenes.WizardScene(
     if (!Number.isFinite(amount) || amount <= 0) {
       return ctx.reply('Please enter a valid amount (e.g. 0.1).');
     }
-    ctx.wizard.state.data.amount = amount;
+    ctx.wizard.state.data = { amount }; // Initialize state.data
     await ctx.reply(`Confirm: Dump ${amount} SOL to 10 wallets in 10 seconds.`);
     return ctx.wizard.next();
   },
