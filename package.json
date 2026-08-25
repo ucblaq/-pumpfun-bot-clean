@@ -1,0 +1,19 @@
+
+  "name": "pumpfun-launch-bot",
+  "version": "1.0.0",
+  "description": "Telegram bot that launches a token on pump.fun via the PumpPortal API",
+  "type": "module",
+  "private": true,
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "@solana/web3.js": "^1.95.3",
+    "bs58": "^6.0.0",
+    "dotenv": "^16.4.5",
+    "telegraf": "^4.16.3"
+  }
+}
